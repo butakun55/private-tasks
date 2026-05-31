@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プライベートタスク</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  --ink: #1f1a2e;
+  --paper: #f6f4fb;
+  --cream: #eceaf4;
+  --line: #d8d3ea;
+  --muted: #9a92b0;
+  --surface: #ffffff;
+
+  --accent:  #7c4dcc;
+  --accent2: #2e7d52;
+  --warn:    #c87a0a;
+  --money:   #1a7a5e;
+  --danger:  #c8400a;
+
+  --r1: #c8400a; --r2: #b86e00; --r3: #2e7d52; --r4: #999;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+
+/* ── SITUATION BAR ── */
+.situation-bar { background: var(--ink); color: #f0eefb; padding: 0 16px; }
+.sit-inner { display: flex; align-items: stretch; min-height: 54px; gap: 0; }
+.sit-label {
+  font-size: 10px; letter-spacing: 0.12em; color: #6a6480;
+  text-transform: uppercase; padding: 8px 14px 8px 0;
+  display: flex; align-items: center; flex-shrink: 0;
+  border-right: 1px solid #2e2a40; margin-right: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.sit-toggles { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; padding: 8px 0; }
+.sit-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: #2a2540; border: 1.5px solid #3a3555;
+  border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif; color: #888;
+}
+.sit-toggle.on       { background: var(--accent);  border-color: var(--accent);  color: white; }
+.sit-toggle.on-green { background: var(--accent2); border-color: var(--accent2); color: white; }
+.sit-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: #444; transition: background 0.15s; }
+.sit-toggle.on .dot, .sit-toggle.on-green .dot { background: rgba(255,255,255,0.8); }
+.sit-divider { width: 1px; background: #2e2a40; align-self: stretch; margin: 10px 4px; flex-shrink: 0; }
+.date-badge {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6a6480;
+  display: flex; align-items: center; padding-left: 10px;
+  border-left: 1px solid #2e2a40; margin-left: auto; flex-shrink: 0;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 16px 16px 10px; border-bottom: 2px solid var(--ink);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
+.header-sub { font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+.header-btns { display: flex; gap: 7px; margin-left: auto; align-items: center; flex-wrap: wrap; }
+
+.sub-btn {
+  background: none; color: var(--muted); border: 1.5px solid var(--line);
+  border-radius: 8px; padding: 7px 11px; font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.sub-btn:hover { border-color: var(--accent); color: var(--accent); }
+.add-btn {
+  background: var(--accent); color: white; border: none;
+  border-radius: 8px; padding: 8px 16px; font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+}
+.add-btn:hover { opacity: 0.8; }
+
+/* ── RANK SECTIONS ── */
+.rank-section { border-bottom: 1px solid var(--line); }
+.rank-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px 8px; position: sticky; top: 0; z-index: 10;
+  background: var(--paper); border-bottom: 1px solid var(--line);
+}
+.rank-pip { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rank-1 .rank-pip { background: var(--r1); }
+.rank-2 .rank-pip { background: var(--r2); }
+.rank-3 .rank-pip { background: var(--r3); }
+.rank-4 .rank-pip { background: var(--r4); }
+.rank-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.rank-1 .rank-title { color: var(--r1); }
+.rank-2 .rank-title { color: var(--r2); }
+.rank-3 .rank-title { color: var(--r3); }
+.rank-4 .rank-title { color: var(--r4); }
+.rank-why { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.rank-count { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+
+/* ── TASK CARDS ── */
+.task-list { padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 5px; }
+.task-card {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 11px 13px; display: flex; gap: 10px;
+  transition: all 0.15s; position: relative;
+  animation: fadeUp 0.2s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.task-card:hover { border-color: #b0a8d0; box-shadow: 0 2px 10px rgba(124,77,204,0.08); }
+.task-card.done { opacity: 0.35; }
+
+.score-strip { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; }
+.rank-1 .score-strip { background: var(--r1); }
+.rank-2 .score-strip { background: var(--r2); }
+.rank-3 .score-strip { background: var(--r3); }
+.rank-4 .score-strip { background: var(--r4); }
+
+.task-main { flex: 1; min-width: 0; cursor: pointer; }
+.task-title { font-size: 14px; font-weight: 500; line-height: 1.4; word-break: break-all; }
+.task-card.done .task-title { text-decoration: line-through; }
+
+.task-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag {
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--cream); color: var(--muted); font-weight: 500; white-space: nowrap;
+}
+.tag.cat-shopping  { background: #fef0e0; color: #a06020; }
+.tag.cat-athome    { background: #edf4ff; color: #2a5fa0; }
+.tag.cat-sukima    { background: #fffbe8; color: #9a6e00; }
+.tag.cat-family    { background: #f3ecf8; color: #7c4dcc; }
+.tag.cat-hobby     { background: #edf6f0; color: #2e7d52; }
+.tag.cat-errand    { background: #fff0e8; color: #c05020; }
+
+.tag.attr-family-task { background: #f3ecf8; color: #7c4dcc; }
+.tag.attr-money    { background: #e8f5ee; color: var(--money); font-weight: 700; }
+.tag.tag-n1 { background: #fff8e0; color: #8a6500; font-weight: 700; }
+.tag.tag-n2 { background: #fff0e8; color: #a04020; font-weight: 700; }
+.tag.tag-n3 { background: #fdeef0; color: #c8400a; font-weight: 700; }
+.tag.tag-n4 { background: #fdeef0; color: #a00020; font-weight: 700; }
+.tag.tag-n5 { background: #edf6f0; color: #2e7d52; font-weight: 700; }
+.tag.tag-n6 { background: #f0f0ff; color: #4040b0; font-weight: 700; }
+.tag.attr-routine  { background: #e8f4fc; color: #1a6090; }
+.tag.attr-risk     { background: #fff0e0; color: var(--warn); }
+.tag.attr-heavy    { background: var(--cream); color: #666; }
+.tag.impact-hi     { background: #fdeef0; color: var(--danger); font-weight: 700; }
+.tag.impact-mid    { background: #fff3ee; color: #c05040; }
+
+.tag.deadline-hot  { background: #fdeef0; color: var(--danger); font-weight: 700; }
+.tag.deadline-soon { background: #fef8e0; color: var(--warn); }
+
+.task-memo { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.reason-row { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 5px; }
+.reason-chip {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px;
+  background: var(--cream); color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+}
+
+.task-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.score-badge {
+  font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; line-height: 1;
+}
+.rank-1 .score-badge { color: var(--r1); }
+.rank-2 .score-badge { color: var(--r2); }
+.rank-3 .score-badge { color: var(--r3); }
+.rank-4 .score-badge { color: var(--r4); }
+
+.done-btn {
+  font-size: 18px; background: none; border: none; cursor: pointer;
+  line-height: 1; opacity: 0.3; transition: opacity 0.15s, transform 0.15s;
+}
+.done-btn:hover { opacity: 1; transform: scale(1.2); }
+.task-card.done .done-btn { opacity: 1; }
+.dup-btn {
+  font-size: 14px; background: none; border: none; cursor: pointer;
+  line-height: 1; opacity: 0.25; transition: opacity 0.15s;
+}
+.dup-btn:hover { opacity: 0.9; }
+
+.status-pill {
+  font-size: 10px; padding: 2px 7px; border-radius: 10px; cursor: pointer;
+  border: none; font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+}
+.sp-todo       { background: var(--cream); color: var(--muted); }
+.sp-inprogress { background: #fef0e0; color: var(--warn); }
+.sp-done       { background: #edf6f0; color: var(--accent2); }
+
+.empty-msg { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+/* ── MODAL ── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(31,26,46,0.65);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--paper); border-radius: 18px 18px 0 0;
+  width: 100%; max-width: 620px; padding: 22px 20px 44px;
+  transform: translateY(30px); transition: transform 0.25s;
+  max-height: 92vh; overflow-y: auto;
+}
+.overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: var(--line); border-radius: 2px; margin: 0 auto 18px; }
+.modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 6px; font-family: 'IBM Plex Mono', monospace;
+}
+.field input[type=text], .field input[type=date], .field textarea {
+  width: 100%; border: 1.5px solid var(--line); border-radius: 8px;
+  padding: 9px 12px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+  background: white; color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 60px; }
+
+.seg-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg {
+  border: 1.5px solid var(--line); border-radius: 8px; padding: 7px 13px;
+  font-size: 13px; font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer; background: white; transition: all 0.15s; white-space: nowrap;
+}
+.seg.active { border-color: var(--accent); background: var(--accent); color: white; font-weight: 500; }
+
+/* impact slider */
+.impact-row { display: flex; align-items: center; gap: 12px; }
+.impact-slider {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 4px; border-radius: 2px; background: var(--line); outline: none; cursor: pointer;
+}
+.impact-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); cursor: pointer; border: 3px solid white;
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+.impact-val { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; width: 28px; text-align: center; flex-shrink: 0; }
+.impact-desc { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* check attrs */
+.check-group { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+  border: 1.5px solid var(--line); border-radius: 8px; cursor: pointer;
+  transition: all 0.15s; background: white; user-select: none;
+}
+.check-item:hover { border-color: #b0a8d0; }
+.check-item.checked { border-color: var(--accent); background: #f3ecf8; }
+.check-item.nature-checked { border-color: var(--accent); background: #f3ecf8; font-weight:500; }
+.check-box {
+  width: 18px; height: 18px; border: 2px solid var(--line); border-radius: 4px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; font-size: 11px;
+}
+.check-item.checked .check-box { background: var(--accent); border-color: var(--accent); color: white; }
+.check-label { font-size: 13px; flex: 1; }
+.check-sub { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+.btn-save {
+  flex: 1; background: var(--accent); color: white; border: none;
+  border-radius: 10px; padding: 13px; font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+}
+.btn-save:hover { opacity: 0.8; }
+.btn-cancel {
+  background: var(--cream); color: var(--muted); border: none;
+  border-radius: 10px; padding: 13px 16px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+}
+.btn-delete {
+  background: none; color: var(--danger); border: 1.5px solid #f0c0b0;
+  border-radius: 10px; padding: 13px 14px; font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+}
+
+/* toast */
+.toast-overlay {
+  position: fixed; inset: 0; background: rgba(31,26,46,0.55);
+  z-index: 300; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.toast-overlay.open { opacity: 1; pointer-events: all; }
+.toast-box {
+  background: var(--paper); border-radius: 16px; padding: 24px 22px;
+  max-width: 320px; width: 90%; text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.toast-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.toast-box p  { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+.toast-actions { display: flex; gap: 8px; }
+.toast-ok {
+  flex: 1; background: var(--warn); color: white; border: none;
+  border-radius: 10px; padding: 11px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 700; cursor: pointer;
+}
+.toast-cancel {
+  flex: 1; background: var(--cream); color: var(--muted); border: none;
+  border-radius: 10px; padding: 11px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- SITUATION BAR -->
+<div class="situation-bar">
+  <div class="sit-inner">
+    <span class="sit-label">今日の状況</span>
+    <div class="sit-toggles">
+      <button class="sit-toggle" data-key="canGoOut" onclick="toggleLoc(this)">
+        <span class="dot"></span> 🚶 外出できる
+      </button>
+      <button class="sit-toggle" data-key="stayHome" onclick="toggleLoc(this)">
+        <span class="dot"></span> 🏠 家にいる
+      </button>
+      <div class="sit-divider"></div>
+      <button class="sit-toggle" data-key="hasTime" onclick="toggleSit(this)">
+        <span class="dot"></span> ⏱ まとまった時間あり
+      </button>
+      <button class="sit-toggle" data-key="withFamily" onclick="toggleSit(this)">
+        <span class="dot"></span> 👨‍👩‍👧 家族と一緒
+      </button>
+    </div>
+    <span class="date-badge" id="dateBadge"></span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <h1>🌿 プライベート</h1>
+  <span class="header-sub" id="headerSub"></span>
+  <div class="header-btns">
+    <button class="sub-btn" onclick="confirmReset()">🌅 翌日リセット</button>
+    <button class="sub-btn" onclick="openExport()">📤 出力</button>
+    <button class="sub-btn" onclick="openImport()">📥 読込</button>
+    <button class="add-btn" onclick="openModal()">＋ 追加</button>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<!-- TASK MODAL -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modalTitle">タスクを追加</h2>
+
+    <div class="field">
+      <label>タスク名</label>
+      <input type="text" id="f-title" placeholder="何をする？">
+    </div>
+
+    <div class="field">
+      <label>カテゴリ</label>
+      <div class="seg-group" id="seg-cat">
+        <button class="seg active" data-val="shopping" onclick="setSeg('cat',this)">🛍 買い物・外出</button>
+        <button class="seg"        data-val="athome"   onclick="setSeg('cat',this)">🏠 在宅必要</button>
+        <button class="seg"        data-val="sukima"   onclick="setSeg('cat',this)">⚡ すき間でやる</button>
+        <button class="seg"        data-val="family"   onclick="setSeg('cat',this)">👨‍👩‍👧 家族と</button>
+        <button class="seg"        data-val="hobby"    onclick="setSeg('cat',this)">🎨 趣味・自己投資</button>
+        <button class="seg"        data-val="errand"   onclick="setSeg('cat',this)">📋 その他</button>
+      </div>
+    </div>
+
+    <!-- 家族への影響度 -->
+    <div class="field">
+      <label>家族への影響度 — やらないと誰かが困るか</label>
+      <div class="impact-row">
+        <span style="font-size:12px;color:var(--muted);">なし</span>
+        <input type="range" class="impact-slider" id="f-impact" min="0" max="5" value="0"
+               oninput="updateImpact(this.value)">
+        <span style="font-size:12px;color:var(--muted);">深刻</span>
+        <span class="impact-val" id="impact-val">0</span>
+      </div>
+      <div class="impact-desc" id="impact-desc">自分だけのタスク</div>
+    </div>
+
+    <!-- タスクの性質 -->
+    <div class="field">
+      <label>タスクの性質</label>
+      <div class="check-group">
+        <div class="check-item nature-item" data-key="n1" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            ⚡ <strong>①低重要・緊急・短時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">すき間で即処理・後回しにしない</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n2" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            📦 <strong>②低重要・緊急・長時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">時間を確保してやる・後回し厳禁</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n3" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            🔥 <strong>③高重要・緊急・長時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">本日メイン・まとまった時間をブロックして集中</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n4" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            🚨 <strong>④高重要・緊急・短時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">最優先で差し込む・時間がなくてもすぐやる</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n5" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            🌱 <strong>⑤高重要・低緊急・長時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">重要だが急がない・計画的に時間を確保</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n6" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            ✨ <strong>⑥高重要・低緊急・短時間</strong><br>
+            <small style="color:var(--muted);font-size:11px">すき間に差し込む重要タスク</small>
+          </span>
+        </div>
+        <div class="check-item nature-item" data-key="n0" onclick="selectNature(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">
+            — <strong>性質なし</strong><br>
+            <small style="color:var(--muted);font-size:11px">ルーティン・その他</small>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 追加属性 -->
+    <div class="field">
+      <label>追加属性</label>
+      <div class="check-group">
+        <div class="check-item" data-key="deadline_money" onclick="toggleAttr(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">💴 期限あり<br><small style="color:var(--muted);font-size:11px">支払い・手続きなど、過ぎると損・失効する</small></span>
+          <span class="check-sub">+4点</span>
+        </div>
+        <div class="check-item" data-key="familyTogether" onclick="toggleAttr(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">👨‍👩‍👧 家族と一緒にやる必要がある<br><small style="color:var(--muted);font-size:11px">全員が揃っているときしかできない</small></span>
+          <span class="check-sub">状況次第</span>
+        </div>
+        <div class="check-item" data-key="routine" onclick="toggleAttr(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">🔁 ルーティン<br><small style="color:var(--muted);font-size:11px">毎日・毎週やるべき定期タスク</small></span>
+          <span class="check-sub">+2点</span>
+        </div>
+        <div class="check-item" data-key="risk" onclick="toggleAttr(this)">
+          <div class="check-box">✓</div>
+          <span class="check-label">⚠️ 放置リスクあり<br><small style="color:var(--muted);font-size:11px">時間が経つほど問題が大きくなる</small></span>
+          <span class="check-sub">+3点</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>期限</label>
+      <input type="date" id="f-deadline">
+    </div>
+
+    <div class="field">
+      <label>ステータス</label>
+      <div class="seg-group" id="seg-status">
+        <button class="seg active" data-val="todo"       onclick="setSeg('status',this)">未着手</button>
+        <button class="seg"        data-val="inprogress" onclick="setSeg('status',this)">進行中</button>
+        <button class="seg"        data-val="done"       onclick="setSeg('status',this)">完了</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>メモ</label>
+      <textarea id="f-memo" placeholder="詳細・購入先・金額など"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-delete" id="deleteBtn" style="display:none" onclick="deleteTask()">削除</button>
+      <button class="btn-save" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="export-overlay" onclick="closeExport()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2>📤 データを出力</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+      下のテキストをすべてコピーして、移行先で「📥 読込」に貼り付けてください。
+    </p>
+    <textarea id="export-text" readonly
+      style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:8px;
+             padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+             background:var(--cream);color:var(--ink);resize:none;outline:none;"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExport()">閉じる</button>
+      <button class="btn-save" onclick="copyExport()">📋 コピーする</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="import-overlay" onclick="closeImport()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2>📥 データを読込</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+      出力したテキストをそのまま貼り付けてください。
+    </p>
+    <textarea id="import-text" placeholder="ここに貼り付け..."
+      style="width:100%;height:180px;border:1.5px solid var(--line);border-radius:8px;
+             padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+             background:white;color:var(--ink);resize:none;outline:none;"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeImport()">キャンセル</button>
+      <button class="btn-save" onclick="doImport()">読み込む</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONFIRM -->
+<div class="toast-overlay" id="toast-overlay" onclick="closeToast()">
+  <div class="toast-box" onclick="event.stopPropagation()">
+    <h3>🌅 翌日リセット</h3>
+    <p>完了済みのタスクをすべて「未着手」に戻します。</p>
+    <div class="toast-actions">
+      <button class="toast-cancel" onclick="closeToast()">キャンセル</button>
+      <button class="toast-ok"     onclick="resetToNextDay()">リセットする</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let tasks = [];
+let situation = { canGoOut: false, stayHome: false, hasTime: false, withFamily: false };
+let editingId = null;
+let formCat    = 'shopping';
+let formStatus = 'todo';
+let formAttrs  = {};
+let formImpact = 0;
+let formNature = 'n0';
+
+const IMPACT_DESCS = [
+  '自分だけのタスク',
+  '誰かが少し不便になる',
+  '家族の誰かが困る',
+  '家族全員に影響する',
+  '家族が深刻に困る・信頼に関わる',
+  '早急に対応しないといけない',
+];
+
+// ── Storage (localStorage) ──
+async function loadAll() {
+  try {
+    const t = localStorage.getItem('ptasks');
+    tasks = t ? JSON.parse(t) : [];
+  } catch { tasks = []; }
+  try {
+    const s = localStorage.getItem('psituation');
+    if (s) situation = { canGoOut:false, stayHome:false, hasTime:false, withFamily:false, ...JSON.parse(s) };
+  } catch {}
+}
+async function saveAll() {
+  try {
+    localStorage.setItem('ptasks', JSON.stringify(tasks));
+    localStorage.setItem('psituation', JSON.stringify(situation));
+  } catch(e) { console.error('save error', e); }
+}
+
+// ── Situation ──
+async function toggleLoc(btn) {
+  const k = btn.dataset.key;
+  const wasOn = situation[k];
+  situation.canGoOut = false;
+  situation.stayHome = false;
+  if (!wasOn) situation[k] = true;
+  initSitUI(); await saveAll(); render();
+}
+async function toggleSit(btn) {
+  const k = btn.dataset.key;
+  situation[k] = !situation[k];
+  initSitUI(); await saveAll(); render();
+}
+function initSitUI() {
+  const map = {
+    canGoOut:   { key:'canGoOut',   cls:'on' },
+    stayHome:   { key:'stayHome',   cls:'on-green' },
+    hasTime:    { key:'hasTime',    cls:'on' },
+    withFamily: { key:'withFamily', cls:'on' },
+  };
+  Object.entries(map).forEach(([k, cfg]) => {
+    const btn = document.querySelector(`[data-key="${k}"]`);
+    if (!btn) return;
+    btn.classList.remove('on','on-green');
+    if (situation[k]) btn.classList.add(cfg.cls);
+  });
+  const d = new Date();
+  document.getElementById('dateBadge').textContent =
+    `${d.getMonth()+1}/${d.getDate()}(${'日月火水木金土'[d.getDay()]})`;
+}
+
+// ── Scoring ──
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function scoreTask(t) {
+  if (t.status === 'done') return { score: -1, rank: 4, reasons: [] };
+
+  let score = 0;
+  const reasons = [];
+
+  // 場所チェック
+  const needsOut  = t.cat === 'shopping' || t.cat === 'errand';
+  const needsHome = t.cat === 'athome';
+  const needsFamily = t.attrs?.familyTogether;
+
+  // 外出が必要なのに外出できない
+  if (needsOut && !situation.canGoOut) {
+    return { score: 0, rank: 4, reasons: ['外出できない'] };
+  }
+  // 在宅必要なのに外出中（家にいない）
+  if (needsHome && situation.canGoOut && !situation.stayHome) {
+    return { score: 0, rank: 4, reasons: ['家にいない'] };
+  }
+  // 家族と一緒が必要なのに一緒でない
+  if (needsFamily && !situation.withFamily) {
+    return { score: 0, rank: 4, reasons: ['家族がいない'] };
+  }
+
+  // 家族への影響度（0〜5）
+  const imp = t.impact || 0;
+  if (imp > 0) { score += imp; reasons.push(`影響度+${imp}`); }
+
+  // お金・期限の締め切り（最重要）
+  if (t.attrs?.deadline_money) { score += 4; reasons.push('期限+4'); }
+
+  // ── タスク性質によるスコア ──
+  const nature = t.nature || 'n0';
+
+  // n1: 低重要・緊急・短時間 → 時間問わず即処理
+  if (nature === 'n1') {
+    score += 6; reasons.push('①即処理+6');
+  }
+  // n2: 低重要・緊急・長時間 → 時間あり時に浮上、なければ保留
+  if (nature === 'n2') {
+    if (situation.hasTime) { score += 6; reasons.push('②低緊急長×時間+6'); }
+    else                   { score += 2; reasons.push('②低緊急長(時間待ち)+2'); }
+  }
+  // n3: 高重要・緊急・長時間 → 本日メイン・時間あり時に最高優先
+  if (nature === 'n3') {
+    if (situation.hasTime) { score += 8; reasons.push('③メイン×時間+8'); }
+    else                   { score += 2; reasons.push('③メイン(時間待ち)+2'); }
+  }
+  // n4: 高重要・緊急・短時間 → 時間なし時最優先、時間あり時は③に譲る
+  if (nature === 'n4') {
+    if (situation.hasTime) { score += 5; reasons.push('④緊急即処理+5'); }
+    else                   { score += 7; reasons.push('④緊急即処理+7'); }
+  }
+  // n5: 高重要・低緊急・長時間 → 重要だが急がない。時間あるときだけ浮上
+  if (nature === 'n5') {
+    if (situation.hasTime) { score += 5; reasons.push('⑤重要低緊急×時間+5'); }
+    else                   { score += 1; reasons.push('⑤重要低緊急+1'); }
+  }
+  // n6: 高重要・低緊急・短時間 → 時間問わず一定・すき間に差し込む
+  if (nature === 'n6') {
+    score += 4; reasons.push('⑥すき間重要+4');
+  }
+
+  // ルーティン
+  if (t.attrs?.routine) { score += 2; reasons.push('ルーティン+2'); }
+
+  // 放置リスク
+  if (t.attrs?.risk) { score += 3; reasons.push('放置リスク+3'); }
+
+  // 家族と一緒 × 今一緒にいる
+  if (needsFamily && situation.withFamily) { score += 2; reasons.push('家族在席+2'); }
+
+  // 進行中
+  if (t.status === 'inprogress') { score += 2; reasons.push('進行中+2'); }
+
+  // 期限
+  if (t.deadline) {
+    const diff = Math.floor((new Date(t.deadline) - new Date(today())) / 86400000);
+    if      (diff < 0)   { score += 5; reasons.push('期限切れ+5'); }
+    else if (diff === 0) { score += 4; reasons.push('今日締切+4'); }
+    else if (diff <= 2)  { score += 3; reasons.push(`${diff}日後+3`); }
+    else if (diff <= 7)  { score += 1; reasons.push(`${diff}日後+1`); }
+  }
+
+  const rank = score >= 9 ? 1 : score >= 5 ? 2 : 3;
+  return { score, rank, reasons, nature };
+}
+
+// ── Render ──
+function render() {
+  const app = document.getElementById('app');
+  const active = tasks.filter(t => t.status !== 'done').length;
+  document.getElementById('headerSub').textContent = `残り ${active} 件`;
+
+  const scored  = tasks.map(t => ({ ...t, ...scoreTask(t) }));
+  const done    = scored.filter(t => t.status === 'done');
+  const notDone = scored.filter(t => t.status !== 'done');
+
+  const byRank = r => notDone.filter(t => t.rank === r).sort((a,b) => b.score - a.score);
+  const r1 = byRank(1), r2 = byRank(2), r3 = byRank(3);
+  const r4 = notDone.filter(t => t.rank === 4);
+
+  const sections = [
+    { rank:1, label:'今すぐやる',   why:'②本日メイン・期限・即処理', items: r1 },
+    { rank:2, label:'今日中に',     why:'①即処理・③計画処理',       items: r2 },
+    { rank:3, label:'できれば今日', why:'④重要計画・余裕があれば',   items: r3 },
+    { rank:4, label:'今日はムリ',   why:'外出不可・家族が必要',       items: r4 },
+  ];
+
+  let html = '';
+  for (const sec of sections) {
+    if (sec.items.length === 0 && sec.rank < 4) continue;
+    html += `
+    <div class="rank-section rank-${sec.rank}">
+      <div class="rank-header">
+        <div class="rank-pip"></div>
+        <span class="rank-title">${sec.label}</span>
+        <span class="rank-why">— ${sec.why}</span>
+        <span class="rank-count">${sec.items.length}件</span>
+      </div>
+      <div class="task-list">
+        ${sec.items.length === 0
+          ? '<div class="empty-msg">なし</div>'
+          : sec.items.map(t => renderCard(t)).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (done.length > 0) {
+    html += `
+    <div class="rank-section rank-4">
+      <div class="rank-header">
+        <div class="rank-pip" style="background:#aaa"></div>
+        <span class="rank-title" style="color:#aaa">完了済み</span>
+        <span class="rank-count">${done.length}件</span>
+      </div>
+      <div class="task-list">${done.map(t => renderCard(t)).join('')}</div>
+    </div>`;
+  }
+
+  app.innerHTML = html;
+}
+
+const CAT_LABELS = {
+  shopping:'🛍 買い物・外出', athome:'🏠 在宅必要', sukima:'⚡ すき間でやる',
+  family:'👨‍👩‍👧 家族と', hobby:'🎨 趣味・自己投資', errand:'📋 その他'
+};
+const CAT_CLS = {
+  shopping:'cat-shopping', athome:'cat-athome', sukima:'cat-sukima',
+  family:'cat-family', hobby:'cat-hobby', errand:'cat-errand'
+};
+
+function renderCard(t) {
+  const rank = t.rank || 3;
+  const tags = [`<span class="tag ${CAT_CLS[t.cat]||''}">${CAT_LABELS[t.cat]||t.cat}</span>`];
+
+  const imp = t.impact || 0;
+  if      (imp >= 4) tags.push(`<span class="tag impact-hi">家族影響 ${imp}</span>`);
+  else if (imp >= 2) tags.push(`<span class="tag impact-mid">家族影響 ${imp}</span>`);
+  else if (imp === 1) tags.push(`<span class="tag">家族影響 ${imp}</span>`);
+
+  const NATURE_TAG = {
+    n1: '<span class="tag tag-n1">⚡ ①低重要・緊急・短時間</span>',
+    n2: '<span class="tag tag-n2">📦 ②低重要・緊急・長時間</span>',
+    n3: '<span class="tag tag-n3">🔥 ③高重要・緊急・長時間</span>',
+    n4: '<span class="tag tag-n4">🚨 ④高重要・緊急・短時間</span>',
+    n5: '<span class="tag tag-n5">🌱 ⑤高重要・低緊急・長時間</span>',
+    n6: '<span class="tag tag-n6">✨ ⑥高重要・低緊急・短時間</span>',
+    n0: '',
+  };
+  if (t.nature && t.nature !== 'n0') tags.push(NATURE_TAG[t.nature] || '');
+  if (t.attrs?.deadline_money) tags.push(`<span class="tag attr-money">💴 期限あり</span>`);
+  if (t.attrs?.familyTogether) tags.push(`<span class="tag attr-family-task">👨‍👩‍👧 家族と一緒に</span>`);
+  if (t.attrs?.routine)       tags.push(`<span class="tag attr-routine">🔁 ルーティン</span>`);
+  if (t.attrs?.risk)          tags.push(`<span class="tag attr-risk">⚠️ 放置リスク</span>`);
+  if (t.attrs?.heavy)         tags.push(`<span class="tag attr-heavy">⚖️ 作業量多</span>`);
+
+  if (t.deadline) {
+    const diff = Math.floor((new Date(t.deadline) - new Date(today())) / 86400000);
+    const [,m,d] = t.deadline.split('-');
+    const dl = `📅 ${m}/${d}`;
+    if      (diff < 0)   tags.push(`<span class="tag deadline-hot">${dl} 期限切れ</span>`);
+    else if (diff === 0) tags.push(`<span class="tag deadline-hot">${dl} 今日</span>`);
+    else if (diff <= 3)  tags.push(`<span class="tag deadline-soon">${dl} あと${diff}日</span>`);
+    else                 tags.push(`<span class="tag">${dl}</span>`);
+  }
+
+  const spClass = { todo:'sp-todo', inprogress:'sp-inprogress', done:'sp-done' }[t.status];
+  const spLabel = { todo:'未着手', inprogress:'▶ 進行中', done:'✓ 完了' }[t.status];
+  const reasons  = (t.reasons||[]).map(r => `<span class="reason-chip">${r}</span>`).join('');
+  const scoreDisp = t.score > 0 ? t.score : '';
+
+  return `
+  <div class="task-card rank-${rank} ${t.status==='done'?'done':''}">
+    <div class="score-strip"></div>
+    <div class="task-main" onclick="openModal('${t.id}')">
+      <div class="task-title">${esc(t.title)}</div>
+      <div class="task-tags">
+        <button class="status-pill ${spClass}" onclick="cycleStatus('${t.id}',event)">${spLabel}</button>
+        ${tags.join('')}
+      </div>
+      ${t.memo ? `<div class="task-memo">${esc(t.memo).replace(/\n/g,'<br>')}</div>` : ''}
+      ${reasons ? `<div class="reason-row">${reasons}</div>` : ''}
+    </div>
+    <div class="task-right">
+      <span class="score-badge">${scoreDisp}</span>
+      <button class="done-btn" onclick="toggleDone('${t.id}',event)">${t.status==='done'?'↩':'✓'}</button>
+      <button class="dup-btn"  onclick="duplicateTask('${t.id}',event)" title="複製">⧉</button>
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Actions ──
+function cycleStatus(id, e) {
+  e.stopPropagation();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const o = ['todo','inprogress','done'];
+  t.status = o[(o.indexOf(t.status)+1) % 3];
+  saveAll(); render();
+}
+function toggleDone(id, e) {
+  e.stopPropagation();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === 'done' ? 'todo' : 'done';
+  saveAll(); render();
+}
+function duplicateTask(id, e) {
+  e.stopPropagation();
+  const src = tasks.find(x => x.id === id);
+  if (!src) return;
+  const copy = { ...JSON.parse(JSON.stringify(src)), id: Date.now().toString(), status: 'todo', created: today() };
+  copy.title += '（コピー）';
+  tasks.push(copy);
+  saveAll(); render(); showFlash('複製しました');
+}
+
+// ── Reset ──
+function confirmReset() { document.getElementById('toast-overlay').classList.add('open'); }
+function closeToast()   { document.getElementById('toast-overlay').classList.remove('open'); }
+function resetToNextDay() {
+  tasks.forEach(t => { if (t.status === 'done') t.status = 'todo'; });
+  saveAll(); closeToast(); render(); showFlash('完了タスクをリセットしました');
+}
+
+// ── Export / Import ──
+function openExport() {
+  document.getElementById('export-text').value = JSON.stringify({ version:1, tasks }, null, 2);
+  document.getElementById('export-overlay').classList.add('open');
+}
+function closeExport() { document.getElementById('export-overlay').classList.remove('open'); }
+function copyExport() {
+  const ta = document.getElementById('export-text');
+  ta.select();
+  navigator.clipboard.writeText(ta.value)
+    .then(() => { showFlash('コピーしました！'); closeExport(); })
+    .catch(() => { document.execCommand('copy'); showFlash('コピーしました！'); closeExport(); });
+}
+function openImport() {
+  document.getElementById('import-text').value = '';
+  document.getElementById('import-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('import-text').focus(), 200);
+}
+function closeImport() { document.getElementById('import-overlay').classList.remove('open'); }
+function doImport() {
+  const raw = document.getElementById('import-text').value.trim();
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const imported = Array.isArray(data) ? data : (data.tasks || []);
+    if (!Array.isArray(imported) || imported.length === 0) { showFlash('タスクが見つかりませんでした'); return; }
+    const existingIds = new Set(tasks.map(t => t.id));
+    const newTasks = imported.filter(t => t.id && !existingIds.has(t.id));
+    const dupes = imported.length - newTasks.length;
+    tasks = [...tasks, ...newTasks];
+    saveAll(); closeImport(); render();
+    showFlash(dupes > 0 ? `${newTasks.length}件追加（${dupes}件重複スキップ）` : `${newTasks.length}件を読み込みました`);
+  } catch { showFlash('形式が正しくありません'); }
+}
+
+// ── Modal ──
+function updateImpact(v) {
+  formImpact = parseInt(v);
+  document.getElementById('impact-val').textContent  = v;
+  document.getElementById('impact-desc').textContent = IMPACT_DESCS[v] || '';
+  const pct = (v/5)*100;
+  const colors = ['#ccc','#6b9','#fa0','#f80','#f50','#c00'];
+  document.getElementById('f-impact').style.background =
+    `linear-gradient(to right,${colors[v]} 0%,${colors[v]} ${pct}%,var(--line) ${pct}%,var(--line) 100%)`;
+  document.getElementById('impact-val').style.color = colors[v];
+}
+
+function openModal(id) {
+  editingId = id || null;
+  const t = id ? tasks.find(x => x.id === id) : null;
+  document.getElementById('modalTitle').textContent = t ? 'タスクを編集' : 'タスクを追加';
+  document.getElementById('f-title').value    = t ? t.title : '';
+  document.getElementById('f-deadline').value = t ? (t.deadline||'') : '';
+  document.getElementById('f-memo').value     = t ? (t.memo||'') : '';
+
+  formCat    = t ? (t.cat||'shopping') : 'shopping';
+  formStatus = t ? t.status : 'todo';
+  formAttrs  = t ? { ...(t.attrs||{}) } : {};
+  formImpact = t ? (t.impact||0) : 0;
+  formNature = t ? (t.nature||'n0') : 'n0';
+
+  setSeg('cat',    document.querySelector(`#seg-cat    [data-val="${formCat}"]`));
+  setSeg('status', document.querySelector(`#seg-status [data-val="${formStatus}"]`));
+
+  const slider = document.getElementById('f-impact');
+  slider.value = formImpact;
+  updateImpact(formImpact);
+
+  // 性質（ラジオ）の復元
+  document.querySelectorAll('.nature-item').forEach(el => {
+    el.classList.toggle('checked', el.dataset.key === formNature);
+  });
+
+  // 追加属性（チェック）の復元 — nature-item を除外
+  document.querySelectorAll('.check-group .check-item:not(.nature-item)').forEach(el => {
+    el.classList.toggle('checked', !!formAttrs[el.dataset.key]);
+  });
+
+  document.getElementById('deleteBtn').style.display = t ? 'block' : 'none';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-title').focus(), 200);
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editingId = null; }
+function bgClose(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+function setSeg(key, btn) {
+  if (!btn) return;
+  if (key === 'cat')    formCat    = btn.dataset.val;
+  if (key === 'status') formStatus = btn.dataset.val;
+  btn.closest('.seg-group').querySelectorAll('.seg').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function selectNature(el) {
+  formNature = el.dataset.key;
+  document.querySelectorAll('.nature-item').forEach(e => e.classList.remove('checked'));
+  el.classList.add('checked');
+}
+function toggleAttr(el) {
+  const k = el.dataset.key;
+  formAttrs[k] = !formAttrs[k];
+  el.classList.toggle('checked', formAttrs[k]);
+}
+
+async function saveTask() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  const data = {
+    title, cat: formCat, status: formStatus, impact: formImpact,
+    nature: formNature,
+    attrs: { ...formAttrs },
+    deadline: document.getElementById('f-deadline').value || null,
+    memo: document.getElementById('f-memo').value.trim() || null,
+  };
+  if (editingId) {
+    Object.assign(tasks.find(x => x.id === editingId), data);
+  } else {
+    tasks.push({ id: Date.now().toString(), created: today(), ...data });
+  }
+  await saveAll(); closeModal(); render();
+}
+async function deleteTask() {
+  if (!editingId) return;
+  tasks = tasks.filter(t => t.id !== editingId);
+  await saveAll(); closeModal(); render();
+}
+
+// ── Flash ──
+function showFlash(msg) {
+  let el = document.getElementById('flash-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'flash-msg';
+    el.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+      background:var(--ink);color:#f0eefb;padding:10px 20px;border-radius:20px;
+      font-size:13px;font-family:'Noto Sans JP',sans-serif;z-index:400;
+      pointer-events:none;transition:opacity 0.3s;`;
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 1800);
+}
+
+// ── Init ──
+(async () => {
+  document.getElementById('app').innerHTML =
+    '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">読み込み中…</div>';
+  await loadAll();
+  initSitUI();
+  render();
+})();
+</script>
+</body>
+</html>
