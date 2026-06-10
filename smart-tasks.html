@@ -538,12 +538,12 @@ function scoreTask(t) {
   if (imp > 0) { score += imp; reasons.push(`影響度+${imp}`); }
 
   // 属性
-  if (t.attrs?.waiting) { score += 2; reasons.push('対応待ち+2'); }
+  if (t.attrs?.waiting) { score += 3; reasons.push("対応待ち+3"); }
   if (t.attrs?.routine) { score += 2; reasons.push('ルーティン+2'); }
   if (t.attrs?.risk)    { score += 3; reasons.push('放置リスク+3'); }
   if (t.attrs?.heavy && situation.hasTime)  { score += 2; reasons.push('重×時間+2'); }
   // 短時間でできる × まとまった時間がない → 加点
-  if (t.attrs?.quick && !situation.hasTime) { score += 2; reasons.push('短時間×隙間+2'); }
+  if (t.attrs?.quick && !situation.hasTime) { score += 4; reasons.push("短時間×隙間+4"); }
 
   // 進行中ボーナス
   if (t.status === 'inprogress') { score += 2; reasons.push('進行中+2'); }
